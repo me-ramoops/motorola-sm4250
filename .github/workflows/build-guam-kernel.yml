@@ -4,8 +4,8 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - device/testing/linux-nura-qcom-sm61x5/**
-      - device/testing/device-motorola-guam/**
+      - Mainline/pmos/device/testing/linux-nura-qcom-sm61x5/**
+      - Mainline/pmos/device/testing/device-motorola-guam/**
       - .github/workflows/build-guam-kernel.yml
 
 permissions:
@@ -31,7 +31,7 @@ jobs:
           pmb() {
             python3 "$RUNNER_TEMP/pmbootstrap/pmbootstrap.py" \
               --work "$RUNNER_TEMP/pmbootstrap-work" \
-              --aports "$GITHUB_WORKSPACE" \
+              --aports "$GITHUB_WORKSPACE/Mainline/pmos" \
               "$@"
           }
 
