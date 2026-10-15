@@ -1,3 +1,13 @@
+diff --git a/drivers/input/touchscreen/Kconfig b/drivers/input/touchscreen/Kconfig
+--- a/drivers/input/touchscreen/Kconfig
++++ b/drivers/input/touchscreen/Kconfig
+@@ -0,0 +1 @@
++source "drivers/input/touchscreen/hxchipset/Kconfig"
+diff --git a/drivers/input/touchscreen/Makefile b/drivers/input/touchscreen/Makefile
+--- a/drivers/input/touchscreen/Makefile
++++ b/drivers/input/touchscreen/Makefile
+@@ -0,0 +1 @@
++obj-$(CONFIG_TOUCHSCREEN_HIMAX_CHIPSET) += hxchipset/
 diff --git a/arch/arm64/boot/dts/qcom/Makefile b/arch/arm64/boot/dts/qcom/Makefile
 --- a/arch/arm64/boot/dts/qcom/Makefile
 +++ b/arch/arm64/boot/dts/qcom/Makefile
@@ -10,7 +20,7 @@ diff --git a/arch/arm64/boot/dts/qcom/sm4250-motorola-guam.dts b/arch/arm64/boot
 new file mode 100644
 --- /dev/null
 +++ b/arch/arm64/boot/dts/qcom/sm4250-motorola-guam.dts
-@@ -0,0 +1,233 @@
+@@ -0,0 +1,274 @@
 +// SPDX-License-Identifier: (GPL-2.0+ OR BSD-3-Clause)
 +
 +/dts-v1/;
@@ -20,6 +30,7 @@ new file mode 100644
 +#include "pmi632.dtsi"
 +#include <dt-bindings/gpio/gpio.h>
 +#include <dt-bindings/input/input.h>
++#include <dt-bindings/interrupt-controller/irq.h>
 +
 +/ {
 +	model = "Motorola Moto E7 Plus (XT2081-2)";
@@ -102,6 +113,23 @@ new file mode 100644
 +
 +&mdss_dsi0_phy {
 +	status = "okay";
++};
++
++&tlmm {
++	guam_ts_irq: guam-ts-irq-state {
++		pins = "gpio67";
++		function = "gpio";
++		drive-strength = <8>;
++		bias-pull-up;
++		input-enable;
++	};
++
++	guam_ts_reset: guam-ts-reset-state {
++		pins = "gpio66";
++		function = "gpio";
++		drive-strength = <8>;
++		bias-pull-up;
++	};
 +};
 +
 +&pm6125_gpios {
@@ -189,6 +217,28 @@ new file mode 100644
 +			regulator-max-microvolt = <3600000>;
 +			regulator-allow-set-load;
 +		};
++	};
++};
++
++&qupv3_se2_spi {
++	status = "okay";
++
++	himax@0 {
++		compatible = "himax,hxcommon";
++		reg = <0>;
++		spi-max-frequency = <10000000>;
++		spi-cpha;
++		interrupt-parent = <&tlmm>;
++		interrupts = <67 IRQ_TYPE_EDGE_FALLING>;
++		himax,irq-gpio = <&tlmm 67 GPIO_ACTIVE_LOW>;
++		himax,rst-gpio = <&tlmm 66 GPIO_ACTIVE_HIGH>;
++		himax,panel-coords = <0 720 0 1600>;
++		himax,display-coords = <0 720 0 1600>;
++		himax,def-build-id = <0x1203>;
++		himax,def-config-id = <0x0002>;
++		report_type = <1>;
++		pinctrl-names = "default";
++		pinctrl-0 = <&guam_ts_irq &guam_ts_reset>;
 +	};
 +};
 +

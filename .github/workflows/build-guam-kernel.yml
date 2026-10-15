@@ -1,0 +1,46 @@
+name: build guam kernel
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - device/testing/linux-nura-qcom-sm61x5/**
+      - device/testing/device-motorola-guam/**
+      - .github/workflows/build-guam-kernel.yml
+
+permissions:
+  contents: read
+
+jobs:
+  kernel:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: install host dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y kpartx
+
+      - name: install pmbootstrap
+        run: git clone --depth=1 https://gitlab.postmarketos.org/postmarketOS/pmbootstrap.git "$RUNNER_TEMP/pmbootstrap"
+
+      - name: build kernel package
+        run: |
+          pmb() {
+            python3 "$RUNNER_TEMP/pmbootstrap/pmbootstrap.py" \
+              --work "$RUNNER_TEMP/pmbootstrap-work" \
+              --aports "$GITHUB_WORKSPACE" \
+              "$@"
+          }
+
+          pmb build_init
+          pmb build --arch aarch64 linux-nura-qcom-sm61x5
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-nura-qcom-sm61x5-${{ github.sha }}
+          path: ${{ runner.temp }}/pmbootstrap-work/packages/edge/aarch64/linux-nura-qcom-sm61x5-*.apk
+          if-no-files-found: error
+          retention-days: 14

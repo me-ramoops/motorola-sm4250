@@ -3,7 +3,7 @@ maintainer="Barnabas Czeman <barnabas.czeman@postmarketos.org>"
 _flavor="nura-qcom-sm61x5"
 pkgname=linux-$_flavor
 pkgver=7.2.3
-pkgrel=1
+pkgrel=2
 pkgdesc="Close to mainline linux kernel for Qualcomm Snapdragon SM61x5"
 arch="aarch64"
 _carch="arm64"
@@ -41,6 +41,7 @@ builddir="$srcdir/linux"
 
 prepare() {
 	default_prepare
+	cp -R "$startdir/hxchipset" drivers/input/touchscreen/
 	cp "$srcdir/config-$_flavor.$arch" .config
 }
 
@@ -71,6 +72,6 @@ package() {
 }
 sha512sums="
 2a6393212c413cf3812c2293d074fc9b7f82dec01c740251fe390b0633484b247e95e886493cbec77e6ef9741aebe0a4134c2218672424b332ae119c22566f23  linux-nura-qcom-sm61x5-v7.2.3-r0.tar.gz
-435a56588a7b9b9976c4625aaaf3e0f40279edf75bffb349fcbc91037b5cf90f5e4c6b8794cc6fc744b458551efa1faac1db7794ec8faa344533b671408dfd1f  config-nura-qcom-sm61x5.aarch64
-e3c7a854eff16945e7840c62df685388cc25d497c7ec8172071afaa180f560f48bd569b372d5517ed811579daaabf678dc70c9a60d5aa6e876369a3582779f15  motorola-guam.patch
+d8605600e5e93ff0974b699c4ce6b25776f1566c52bde0f4ee0710eac32a6d2d0697ab608df702c6904c1a3e720fc2abb08a69fa6e53bf4ecea314e9fb7a877a  config-nura-qcom-sm61x5.aarch64
+4ab307b3b939d9d67248775a30684eb79a4a1a78444c81233c16c40d92d7bc792f3d2403b90efd2ba51314cdfe968f0d425c62ca5b8e7d039f407bb36de502b8  motorola-guam.patch
 "

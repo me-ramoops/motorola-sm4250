@@ -3,13 +3,14 @@ maintainer="fwlta <monkeyfwlta@protonmail.com>"
 pkgname=device-motorola-guam
 pkgdesc="Motorola Moto E7 Plus"
 pkgver=1
-pkgrel=0
+pkgrel=1
 url="https://gitlab.com/vanadium-oss/motorola-sm4250"
 license="MIT"
 arch="aarch64"
 options="!check !archcheck"
 depends="
 	android-tools-mkbootimg
+	firmware-motorola-guam
 	firmware-qcom-adreno-a610
 	linux-firmware-ath10k
 	linux-nura-qcom-sm61x5

@@ -1,0 +1,19 @@
+maintainer="fwlta <monkeyfwlta@protonmail.com>"
+pkgname=firmware-motorola-guam
+pkgver=1
+pkgrel=0
+pkgdesc="firmware for motorola moto e7 plus"
+url="https://github.com/TheMuppets/proprietary_vendor_motorola_guam"
+arch="aarch64"
+license="proprietary"
+options="!check !strip !archcheck !tracedeps"
+source="himax_firmware.bin::https://raw.githubusercontent.com/TheMuppets/proprietary_vendor_motorola_guam/371e8e36f49213c3c705476087d19eb74abe6f5d/proprietary/vendor/firmware/hlt_Himax_firmware.bin"
+
+package() {
+	install -Dm644 "$srcdir/himax_firmware.bin" \
+		"$pkgdir/usr/lib/firmware/Himax_firmware.bin"
+}
+
+sha512sums="
+725cf884484f9a5c9b3461b71d7012c5ba9ff2b1cc9f4f201b84313b15bd1edc42b7e67f452ba92c1dde6682d5deaa3d55a9acaa73911ee94e4c33f6383379a4  himax_firmware.bin
+"
