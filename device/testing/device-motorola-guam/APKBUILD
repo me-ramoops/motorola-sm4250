@@ -1,0 +1,35 @@
+# Reference: <https://nura.eco/devicepkg>
+maintainer="fwlta <monkeyfwlta@protonmail.com>"
+pkgname=device-motorola-guam
+pkgdesc="Motorola Moto E7 Plus"
+pkgver=1
+pkgrel=0
+url="https://gitlab.com/vanadium-oss/motorola-sm4250"
+license="MIT"
+arch="aarch64"
+options="!check !archcheck"
+depends="
+	android-tools-mkbootimg
+	firmware-qcom-adreno-a610
+	linux-firmware-ath10k
+	linux-nura-qcom-sm61x5
+	postmarketos-base
+"
+makedepends="devicepkg-dev"
+source="
+	deviceinfo
+	kernel-cmdline.conf
+"
+
+build() {
+	devicepkg_build $startdir $pkgname
+}
+
+package() {
+	devicepkg_package $startdir $pkgname
+}
+
+sha512sums="
+f11430af7af028a42ad54858e24d00b3167b8421057ad3fe06352c9cdfd3a16d105a48c1ebdd9ec43db25e978d3d2e71ad361dbc8031881503b2fe5d97793d9f  deviceinfo
+04cc87ed6b0041ede7edb2693ee4dd58d6ac8f1b036a0b37e1a86cce57b66e35d9f400a3ea75d75278b028132535033915f3a2fff919866e85336c5f92a68ffe  kernel-cmdline.conf
+"
