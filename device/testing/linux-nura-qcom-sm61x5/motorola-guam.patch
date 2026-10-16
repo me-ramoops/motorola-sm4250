@@ -20,7 +20,7 @@ diff --git a/arch/arm64/boot/dts/qcom/sm4250-motorola-guam.dts b/arch/arm64/boot
 new file mode 100644
 --- /dev/null
 +++ b/arch/arm64/boot/dts/qcom/sm4250-motorola-guam.dts
-@@ -0,0 +1,273 @@
+@@ -0,0 +1,288 @@
 +// SPDX-License-Identifier: (GPL-2.0+ OR BSD-3-Clause)
 +
 +/dts-v1/;
@@ -36,6 +36,11 @@ new file mode 100644
 +	model = "Motorola Moto E7 Plus (XT2081-2)";
 +	compatible = "motorola,guam", "qcom,sm4250";
 +	chassis-type = "handset";
++
++	aliases {
++		mmc0 = &sdhc_1;
++		mmc1 = &sdhc_2;
++	};
 +
 +	qcom,msm-id = <0x1a1 0x10000 0x1bc 0x10000>;
 +	qcom,board-id = <0 0xb200>;
@@ -240,6 +245,16 @@ new file mode 100644
 +		pinctrl-names = "default";
 +		pinctrl-0 = <&guam_ts_irq &guam_ts_reset>;
 +	};
++};
++
++&sdhc_1 {
++	vmmc-supply = <&pm6125_l24a>;
++	vqmmc-supply = <&pm6125_l11a>;
++	pinctrl-names = "default", "sleep";
++	pinctrl-0 = <&sdc1_state_on>;
++	pinctrl-1 = <&sdc1_state_off>;
++	non-removable;
++	status = "okay";
 +};
 +
 +&sdhc_2 {
