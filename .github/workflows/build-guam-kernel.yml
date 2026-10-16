@@ -54,6 +54,10 @@ jobs:
           }
 
           pmb build_init
+          mkdir -p "$RUNNER_TEMP/pmbootstrap-work/cache_distfiles"
+          curl --fail --location --retry 3 --retry-delay 5 \
+            https://codeberg.org/sm61x5-mainline/linux/archive/v7.2.3-r0.tar.gz \
+            --output "$RUNNER_TEMP/pmbootstrap-work/cache_distfiles/linux-nura-qcom-sm61x5-v7.2.3-r0.tar.gz"
           pmb build --arch aarch64 linux-nura-qcom-sm61x5 || {
             tail -n 300 "$RUNNER_TEMP/pmbootstrap-work/log.txt"
             exit 1
