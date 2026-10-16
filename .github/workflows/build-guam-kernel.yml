@@ -54,7 +54,10 @@ jobs:
           }
 
           pmb build_init
-          pmb build --arch aarch64 linux-nura-qcom-sm61x5
+          pmb build --arch aarch64 linux-nura-qcom-sm61x5 || {
+            tail -n 300 "$RUNNER_TEMP/pmbootstrap-work/log.txt"
+            exit 1
+          }
 
       - uses: actions/upload-artifact@v4
         with:
