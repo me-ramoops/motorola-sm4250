@@ -18,6 +18,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: add upstream pmaports remote
+        run: |
+          git remote add pmaports https://gitlab.postmarketos.org/postmarketOS/pmaports.git
+          git fetch --depth=1 pmaports main
+
       - name: install host dependencies
         run: |
           sudo apt-get update
