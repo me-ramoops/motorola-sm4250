@@ -74,7 +74,7 @@ jobs:
             return 1
           }
 
-          clone_retry https://github.com/u-boot/u-boot.git v2026.07 "$RUNNER_TEMP/u-boot"
+          clone_retry https://gitlab.com/vanadium-oss/motorola-sm4250/mainline/u-boot.git v2026.07 "$RUNNER_TEMP/u-boot"
           clone_retry https://android.googlesource.com/platform/system/tools/mkbootimg "" "$RUNNER_TEMP/mkbootimg"
           make -C "$RUNNER_TEMP/u-boot" CROSS_COMPILE=aarch64-linux-gnu- O=.output qcom_defconfig qcom-phone.config
           make -C "$RUNNER_TEMP/u-boot" CROSS_COMPILE=aarch64-linux-gnu- O=.output -j2
