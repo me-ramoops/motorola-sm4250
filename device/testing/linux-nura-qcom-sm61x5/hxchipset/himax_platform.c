@@ -454,8 +454,8 @@ int himax_ts_register_interrupt(void)
 	if (!ts->use_irq) {
 		ts->himax_wq = create_singlethread_workqueue("himax_touch");
 		INIT_WORK(&ts->work, himax_ts_work_func);
-		hrtimer_init(&ts->timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
-		ts->timer.function = himax_ts_timer_func;
+		hrtimer_setup(&ts->timer, himax_ts_timer_func,
+			      CLOCK_MONOTONIC, HRTIMER_MODE_REL);
 		hrtimer_start(&ts->timer, ktime_set(1, 0), HRTIMER_MODE_REL);
 		I("%s: polling mode enabled\n", __func__);
 	}
