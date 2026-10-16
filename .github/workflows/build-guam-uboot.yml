@@ -51,8 +51,31 @@ jobs:
           tar -xzf linux-nura-qcom-sm61x5-*.apk -C kernel-package
           dtb=$(find kernel-package -name sm4250-motorola-guam.dtb -print -quit)
           test -n "$dtb"
-          git clone --depth=1 --branch v2026.07 https://github.com/u-boot/u-boot.git "$RUNNER_TEMP/u-boot"
-          git clone --depth=1 https://android.googlesource.com/platform/system/tools/mkbootimg "$RUNNER_TEMP/mkbootimg"
+          clone_retry() {
+            repository=$1
+            reference=$2
+            destination=$3
+
+            for attempt in 1 2 3; do
+              attempt_destination="$destination-$attempt"
+              if [ -n "$reference" ]; then
+                if git clone --depth=1 --branch "$reference" "$repository" "$attempt_destination"; then
+                  mv "$attempt_destination" "$destination"
+                  return 0
+                fi
+              elif git clone --depth=1 "$repository" "$attempt_destination"; then
+                mv "$attempt_destination" "$destination"
+                return 0
+              fi
+
+              sleep 10
+            done
+
+            return 1
+          }
+
+          clone_retry https://github.com/u-boot/u-boot.git v2026.07 "$RUNNER_TEMP/u-boot"
+          clone_retry https://android.googlesource.com/platform/system/tools/mkbootimg "" "$RUNNER_TEMP/mkbootimg"
           make -C "$RUNNER_TEMP/u-boot" CROSS_COMPILE=aarch64-linux-gnu- O=.output qcom_defconfig qcom-phone.config
           make -C "$RUNNER_TEMP/u-boot" CROSS_COMPILE=aarch64-linux-gnu- O=.output -j2
           gzip -n -c "$RUNNER_TEMP/u-boot/.output/u-boot-nodtb.bin" > u-boot-nodtb.bin.gz
