@@ -167,26 +167,30 @@ int himax_parse_dt(struct himax_ts_data *ts,
 	I(" DT-%s:display-coords = (%d, %d)\n", __func__,
 			pdata->screenWidth,
 			pdata->screenHeight);
-	pdata->gpio_irq = of_get_named_gpio(dt, "himax,irq-gpio", 0);
+	pdata->gpio_irq = devm_gpiod_get_from_of_node(ts->dev, dt,
+			"himax,irq-gpio", 0, GPIOD_IN, "himax-irq");
+	if (IS_ERR(pdata->gpio_irq))
+		return dev_err_probe(ts->dev, PTR_ERR(pdata->gpio_irq),
+				     "failed to get irq gpio\n");
+	if (!pdata->gpio_irq)
+		return -EINVAL;
 
-	if (!gpio_is_valid(pdata->gpio_irq))
-		I(" DT:gpio_irq value is not valid\n");
+	pdata->gpio_reset = devm_gpiod_get_from_of_node(ts->dev, dt,
+			"himax,rst-gpio", 0, GPIOD_OUT_LOW, "himax-reset");
+	if (IS_ERR(pdata->gpio_reset))
+		return dev_err_probe(ts->dev, PTR_ERR(pdata->gpio_reset),
+				     "failed to get reset gpio\n");
+	if (!pdata->gpio_reset)
+		return -EINVAL;
 
-
-	pdata->gpio_reset = of_get_named_gpio(dt, "himax,rst-gpio", 0);
-
-	if (!gpio_is_valid(pdata->gpio_reset))
-		I(" DT:gpio_rst value is not valid\n");
-
-	pdata->gpio_3v3_en = of_get_named_gpio(dt, "himax,3v3-gpio", 0);
-
-	if (!gpio_is_valid(pdata->gpio_3v3_en))
-		I(" DT:gpio_3v3_en value is not valid\n");
-
-	I(" DT:gpio_irq=%d, gpio_rst=%d, gpio_3v3_en=%d\n",
-			pdata->gpio_irq,
-			pdata->gpio_reset,
-			pdata->gpio_3v3_en);
+	pdata->gpio_3v3_en = devm_gpiod_get_from_of_node(ts->dev, dt,
+			"himax,3v3-gpio", 0, GPIOD_OUT_LOW, "himax-3v3-en");
+	if (IS_ERR(pdata->gpio_3v3_en) &&
+	    PTR_ERR(pdata->gpio_3v3_en) == -ENOENT)
+		pdata->gpio_3v3_en = NULL;
+	else if (IS_ERR(pdata->gpio_3v3_en))
+		return dev_err_probe(ts->dev, PTR_ERR(pdata->gpio_3v3_en),
+				     "failed to get 3v3 enable gpio\n");
 
 	if (of_property_read_u32(dt, "report_type", &data) == 0) {
 		pdata->protocol_type = data;
@@ -333,363 +337,48 @@ void himax_int_enable(int enable)
 EXPORT_SYMBOL(himax_int_enable);
 
 #if defined(HX_RST_PIN_FUNC)
-void himax_rst_gpio_set(int pinnum, uint8_t value)
+void himax_rst_gpio_set(struct gpio_desc *gpio, uint8_t value)
 {
-	gpio_direction_output(pinnum, value);
+	gpiod_set_value_cansleep(gpio, value);
 }
 EXPORT_SYMBOL(himax_rst_gpio_set);
 #endif
 
-uint8_t himax_int_gpio_read(int pinnum)
+uint8_t himax_int_gpio_read(struct gpio_desc *gpio)
 {
-	return gpio_get_value(pinnum);
-}
-
-#if defined(CONFIG_HMX_DB)
-static int himax_regulator_configure(struct himax_i2c_platform_data *pdata)
-{
-	int retval;
-	/* struct i2c_client *client = private_ts->client; */
-
-	pdata->vcc_dig = regulator_get(private_ts->dev, "vdd");
-
-	if (IS_ERR(pdata->vcc_dig)) {
-		E("%s: Failed to get regulator vdd\n",
-		  __func__);
-		retval = PTR_ERR(pdata->vcc_dig);
-		return retval;
-	}
-
-	pdata->vcc_ana = regulator_get(private_ts->dev, "avdd");
-
-	if (IS_ERR(pdata->vcc_ana)) {
-		E("%s: Failed to get regulator avdd\n",
-		  __func__);
-		retval = PTR_ERR(pdata->vcc_ana);
-		regulator_put(pdata->vcc_dig);
-		return retval;
-	}
-
-	return 0;
-};
-
-static void himax_regulator_deinit(struct himax_i2c_platform_data *pdata)
-{
-	I("%s: entered.\n", __func__);
-
-	if (!IS_ERR(pdata->vcc_ana))
-		regulator_put(pdata->vcc_ana);
-
-	if (!IS_ERR(pdata->vcc_dig))
-		regulator_put(pdata->vcc_dig);
-
-	I("%s: regulator put, completed.\n", __func__);
-};
-
-static int himax_power_on(struct himax_i2c_platform_data *pdata, bool on)
-{
-	int retval;
-
-	if (on) {
-		retval = regulator_enable(pdata->vcc_dig);
-
-		if (retval) {
-			E("%s: Failed to enable regulator vdd\n",
-					__func__);
-			return retval;
-		}
-
-		/*msleep(100);*/
-		usleep_range(1000, 1001);
-		retval = regulator_enable(pdata->vcc_ana);
-
-		if (retval) {
-			E("%s: Failed to enable regulator avdd\n",
-					__func__);
-			regulator_disable(pdata->vcc_dig);
-			return retval;
-		}
-	} else {
-		regulator_disable(pdata->vcc_dig);
-		regulator_disable(pdata->vcc_ana);
-	}
-
-	return 0;
+	return gpiod_get_value_cansleep(gpio);
 }
 
 int himax_gpio_power_config(struct himax_i2c_platform_data *pdata)
 {
-	int error;
-	/* struct i2c_client *client = private_ts->client; */
+	if (!pdata->gpio_irq)
+		return -EINVAL;
 
-	error = himax_regulator_configure(pdata);
+	if (pdata->gpio_reset)
+		gpiod_set_value_cansleep(pdata->gpio_reset, 0);
 
-	if (error) {
-		E("Failed to intialize hardware\n");
-		goto err_regulator_not_on;
-	}
+	if (pdata->gpio_3v3_en)
+		gpiod_set_value_cansleep(pdata->gpio_3v3_en, 1);
 
-#if defined(HX_RST_PIN_FUNC)
+	private_ts->hx_irq = gpiod_to_irq(pdata->gpio_irq);
+	if (private_ts->hx_irq < 0)
+		return private_ts->hx_irq;
 
-	if (gpio_is_valid(pdata->gpio_reset)) {
-		/* configure touchscreen reset out gpio */
-		error = gpio_request(pdata->gpio_reset, "hmx_reset_gpio");
-
-		if (error) {
-			E("unable to request gpio [%d]\n", pdata->gpio_reset);
-			goto err_regulator_on;
-		}
-
-		error = gpio_direction_output(pdata->gpio_reset, 0);
-
-		if (error) {
-			E("unable to set direction for gpio [%d]\n",
-			  pdata->gpio_reset);
-			goto err_gpio_reset_req;
-		}
-	}
-
-#endif
-	error = himax_power_on(pdata, true);
-
-	if (error) {
-		E("Failed to power on hardware\n");
-		goto err_power_on;
-	}
-
-	if (gpio_is_valid(pdata->gpio_irq)) {
-		/* configure touchscreen irq gpio */
-		error = gpio_request(pdata->gpio_irq, "hmx_gpio_irq");
-
-		if (error) {
-			E("unable to request gpio [%d]\n",
-			  pdata->gpio_irq);
-			goto err_req_irq_gpio;
-		}
-
-		error = gpio_direction_input(pdata->gpio_irq);
-
-		if (error) {
-			E("unable to set direction for gpio [%d]\n",
-			  pdata->gpio_irq);
-			goto err_set_gpio_irq;
-		}
-
-		private_ts->hx_irq = gpio_to_irq(pdata->gpio_irq);
-	} else {
-		E("irq gpio not provided\n");
-		goto err_req_irq_gpio;
-	}
-
-	/*msleep(20);*/
 	usleep_range(2000, 2001);
-#if defined(HX_RST_PIN_FUNC)
 
-	if (gpio_is_valid(pdata->gpio_reset)) {
-		error = gpio_direction_output(pdata->gpio_reset, 1);
+	if (pdata->gpio_reset)
+		gpiod_set_value_cansleep(pdata->gpio_reset, 1);
 
-		if (error) {
-			E("unable to set direction for gpio [%d]\n",
-					pdata->gpio_reset);
-			goto err_set_gpio_irq;
-		}
-	}
-
-#endif
 	return 0;
-err_set_gpio_irq:
-
-	if (gpio_is_valid(pdata->gpio_irq))
-		gpio_free(pdata->gpio_irq);
-
-err_req_irq_gpio:
-	himax_power_on(pdata, false);
-err_power_on:
-#if defined(HX_RST_PIN_FUNC)
-err_gpio_reset_req:
-	if (gpio_is_valid(pdata->gpio_reset))
-		gpio_free(pdata->gpio_reset);
-
-err_regulator_on:
-#endif
-	himax_regulator_deinit(pdata);
-err_regulator_not_on:
-	return error;
 }
-
-#else
-int himax_gpio_power_config(struct himax_i2c_platform_data *pdata)
-{
-	int error = 0;
-	/* struct i2c_client *client = private_ts->client; */
-#if defined(HX_RST_PIN_FUNC)
-
-	if (pdata->gpio_reset >= 0) {
-		error = gpio_request(pdata->gpio_reset, "himax-reset");
-
-		if (error < 0) {
-			E("%s: request reset pin failed\n", __func__);
-			goto err_gpio_reset_req;
-		}
-
-		error = gpio_direction_output(pdata->gpio_reset, 0);
-
-		if (error) {
-			E("unable to set direction for gpio [%d]\n",
-					pdata->gpio_reset);
-			goto err_gpio_reset_dir;
-		}
-	}
-
-#endif
-
-#if defined(HX_PON_PIN_SUPPORT)
-	if (gpio_is_valid(pdata->gpio_pon)) {
-		error = gpio_request(pdata->gpio_pon, "hmx_pon_gpio");
-
-		if (error) {
-			E("unable to request scl gpio [%d]\n", pdata->gpio_pon);
-			goto err_gpio_pon_req;
-		}
-
-		error = gpio_direction_output(pdata->gpio_pon, 0);
-
-		I("gpio_pon LOW [%d]\n", pdata->gpio_pon);
-
-		if (error) {
-			E("unable to set direction for pon gpio [%d]\n",
-				pdata->gpio_pon);
-			goto err_gpio_pon_dir;
-		}
-	}
-#endif
-
-
-	if (pdata->gpio_3v3_en >= 0) {
-		error = gpio_request(pdata->gpio_3v3_en, "himax-3v3_en");
-
-		if (error < 0) {
-			E("%s: request 3v3_en pin failed\n", __func__);
-			goto err_gpio_3v3_req;
-		}
-
-		gpio_direction_output(pdata->gpio_3v3_en, 1);
-		I("3v3_en set 1 get pin = %d\n",
-			gpio_get_value(pdata->gpio_3v3_en));
-	}
-
-	if (gpio_is_valid(pdata->gpio_irq)) {
-		/* configure touchscreen irq gpio */
-		error = gpio_request(pdata->gpio_irq, "himax_gpio_irq");
-
-		if (error) {
-			E("unable to request gpio [%d]\n", pdata->gpio_irq);
-			goto err_gpio_irq_req;
-		}
-
-		error = gpio_direction_input(pdata->gpio_irq);
-
-		if (error) {
-			E("unable to set direction for gpio [%d]\n",
-				pdata->gpio_irq);
-			goto err_gpio_irq_set_input;
-		}
-
-		private_ts->hx_irq = gpio_to_irq(pdata->gpio_irq);
-	} else {
-		E("irq gpio not provided\n");
-		goto err_gpio_irq_req;
-	}
-#if defined(HX_PON_PIN_SUPPORT)
-	msleep(20);
-#else
-	usleep_range(2000, 2001);
-#endif
-
-#if defined(HX_RST_PIN_FUNC)
-
-	if (pdata->gpio_reset >= 0) {
-		error = gpio_direction_output(pdata->gpio_reset, 1);
-
-		if (error) {
-			E("unable to set direction for gpio [%d]\n",
-			  pdata->gpio_reset);
-			goto err_gpio_reset_set_high;
-		}
-	}
-#endif
-
-#if defined(HX_PON_PIN_SUPPORT)
-	msleep(800);
-
-	if (gpio_is_valid(pdata->gpio_pon)) {
-
-		error = gpio_direction_output(pdata->gpio_pon, 1);
-
-		I("gpio_pon HIGH [%d]\n", pdata->gpio_pon);
-
-		if (error) {
-			E("gpio_pon unable to set direction for gpio [%d]\n",
-					pdata->gpio_pon);
-			goto err_gpio_pon_set_high;
-		}
-	}
-#endif
-	return error;
-
-#if defined(HX_PON_PIN_SUPPORT)
-err_gpio_pon_set_high:
-#endif
-#if defined(HX_RST_PIN_FUNC)
-err_gpio_reset_set_high:
-#endif
-err_gpio_irq_set_input:
-	if (gpio_is_valid(pdata->gpio_irq))
-		gpio_free(pdata->gpio_irq);
-err_gpio_irq_req:
-	if (pdata->gpio_3v3_en >= 0)
-		gpio_free(pdata->gpio_3v3_en);
-err_gpio_3v3_req:
-#if defined(HX_PON_PIN_SUPPORT)
-err_gpio_pon_dir:
-	if (gpio_is_valid(pdata->gpio_pon))
-		gpio_free(pdata->gpio_pon);
-err_gpio_pon_req:
-#endif
-#if defined(HX_RST_PIN_FUNC)
-err_gpio_reset_dir:
-	if (pdata->gpio_reset >= 0)
-		gpio_free(pdata->gpio_reset);
-err_gpio_reset_req:
-#endif
-	return error;
-}
-
-#endif
 
 void himax_gpio_power_deconfig(struct himax_i2c_platform_data *pdata)
 {
-	if (gpio_is_valid(pdata->gpio_irq))
-		gpio_free(pdata->gpio_irq);
+	if (pdata->gpio_reset)
+		gpiod_set_value_cansleep(pdata->gpio_reset, 0);
 
-#if defined(HX_RST_PIN_FUNC)
-	if (gpio_is_valid(pdata->gpio_reset))
-		gpio_free(pdata->gpio_reset);
-#endif
-
-#if defined(CONFIG_HMX_DB)
-	himax_power_on(pdata, false);
-	himax_regulator_deinit(pdata);
-#else
-	if (pdata->gpio_3v3_en >= 0)
-		gpio_free(pdata->gpio_3v3_en);
-
-#if defined(HX_PON_PIN_SUPPORT)
-	if (gpio_is_valid(pdata->gpio_pon))
-		gpio_free(pdata->gpio_pon);
-#endif
-
-#endif
+	if (pdata->gpio_3v3_en)
+		gpiod_set_value_cansleep(pdata->gpio_3v3_en, 0);
 }
 
 static void himax_ts_isr_func(struct himax_ts_data *ts)

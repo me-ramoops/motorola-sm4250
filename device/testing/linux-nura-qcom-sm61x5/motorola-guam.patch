@@ -220,7 +220,7 @@ new file mode 100644
 +	};
 +};
 +
-+&qupv3_se2_spi {
++&spi2 {
 +	status = "okay";
 +
 +	himax@0 {

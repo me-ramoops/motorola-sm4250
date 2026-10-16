@@ -18,13 +18,10 @@
 
 #include <linux/delay.h>
 #include <linux/fs.h>
-#include <linux/gpio.h>
+#include <linux/gpio/consumer.h>
 #include <linux/types.h>
 #include <linux/spi/spi.h>
 #include <linux/interrupt.h>
-#if defined(CONFIG_HMX_DB)
-	#include <linux/regulator/consumer.h>
-#endif
 
 #define HIMAX_SPI_FIFO_POLLING
 #define HIMAX_I2C_RETRY_TIMES 3
@@ -45,24 +42,6 @@ do { \
 #define W(x...)
 #define E(x...)
 #define DIF(x...)
-#endif
-
-#if defined(CONFIG_HMX_DB)
-	/* Analog voltage @2.7 V */
-#define HX_VTG_MIN_UV			2700000
-#define HX_VTG_MAX_UV			3300000
-#define HX_ACTIVE_LOAD_UA		15000
-#define HX_LPM_LOAD_UA			10
-/* Digital voltage @1.8 V */
-#define HX_VTG_DIG_MIN_UV		1800000
-#define HX_VTG_DIG_MAX_UV		1800000
-#define HX_ACTIVE_LOAD_DIG_UA	10000
-#define HX_LPM_LOAD_DIG_UA		10
-
-#define HX_I2C_VTG_MIN_UV		1800000
-#define HX_I2C_VTG_MAX_UV		1800000
-#define HX_I2C_LOAD_UA			10000
-#define HX_I2C_LPM_LOAD_UA		10
 #endif
 
 #define HIMAX_common_NAME	"himax_tp"
@@ -88,9 +67,9 @@ struct himax_i2c_platform_data {
 	uint8_t powerOff3V3;
 	uint8_t cable_config[2];
 	uint8_t protocol_type;
-	int gpio_irq;
-	int gpio_reset;
-	int gpio_3v3_en;
+	struct gpio_desc *gpio_irq;
+	struct gpio_desc *gpio_reset;
+	struct gpio_desc *gpio_3v3_en;
 	int (*power)(int on);
 	void (*reset)(void);
 	struct himax_virtual_key *virtual_key;
@@ -98,18 +77,6 @@ struct himax_i2c_platform_data {
 	struct kobj_attribute *vk2Use;
 
 	int hx_config_size;
-#if defined(CONFIG_HMX_DB)
-	bool i2c_pull_up;
-	bool digital_pwr_regulator;
-	int reset_gpio;
-	u32 reset_gpio_flags;
-	int irq_gpio;
-	u32 irq_gpio_flags;
-
-	struct regulator *vcc_ana; /* For Dragon Board */
-	struct regulator *vcc_dig; /* For Dragon Board */
-	struct regulator *vcc_i2c; /* For Dragon Board */
-#endif
 };
 
 extern struct himax_ic_data *ic_data;
@@ -127,7 +94,7 @@ extern int himax_bus_write_command(uint8_t command, uint8_t toRetry);
 extern void himax_int_enable(int enable);
 extern int himax_ts_register_interrupt(void);
 int himax_ts_unregister_interrupt(void);
-extern uint8_t himax_int_gpio_read(int pinnum);
+extern uint8_t himax_int_gpio_read(struct gpio_desc *gpio);
 
 extern int himax_gpio_power_config(struct himax_i2c_platform_data *pdata);
 void himax_gpio_power_deconfig(struct himax_i2c_platform_data *pdata);

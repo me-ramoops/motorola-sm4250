@@ -2376,7 +2376,7 @@ static void himax_mcu_ic_reset(uint8_t loadconfig, uint8_t int_off)
 	I("%s,status: loadconfig=%d,int_off=%d\n", __func__,
 			loadconfig, int_off);
 
-	if (ts->rst_gpio >= 0) {
+	if (ts->rst_gpio) {
 		if (int_off)
 			g_core_fp.fp_irq_switch(0);
 

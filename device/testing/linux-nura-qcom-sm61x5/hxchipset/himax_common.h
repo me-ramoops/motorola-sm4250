@@ -26,7 +26,6 @@
 #include <linux/async.h>
 #include <linux/platform_device.h>
 #include <linux/slab.h>
-#include <linux/gpio.h>
 #include <linux/input/mt.h>
 #include <linux/firmware.h>
 #include <linux/types.h>
@@ -40,10 +39,6 @@
 
 int himax_hx83102_probe(void);
 int himax_hx83102_remove(void);
-
-#if defined(CONFIG_OF)
-	#include <linux/of_gpio.h>
-#endif
 
 #define HIMAX_DRIVER_VER "2.0.0.51_HTF065H035_01"
 
@@ -395,7 +390,7 @@ struct himax_ts_data {
 	uint32_t pl_y_min;
 	uint32_t pl_y_max;
 
-	int rst_gpio;
+	struct gpio_desc *rst_gpio;
 	int use_irq;
 	int (*power)(int on);
 	int pre_finger_data[10][2];

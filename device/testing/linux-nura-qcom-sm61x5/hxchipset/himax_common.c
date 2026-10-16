@@ -2891,7 +2891,8 @@ int himax_chip_common_init(void)
 		goto err_alloc_touch_data_failed;
 	}
 
-	if (himax_parse_dt(ts, pdata) < 0) {
+	err = himax_parse_dt(ts, pdata);
+	if (err < 0) {
 		I(" pdata is NULL for DT\n");
 		goto err_alloc_dt_pdata_failed;
 	}
@@ -2899,7 +2900,9 @@ int himax_chip_common_init(void)
 #if defined(HX_RST_PIN_FUNC)
 	ts->rst_gpio = pdata->gpio_reset;
 #endif
-	himax_gpio_power_config(pdata);
+	err = himax_gpio_power_config(pdata);
+	if (err)
+		goto error_ic_detect_failed;
 #if !defined(CONFIG_OF)
 
 	if (pdata->power) {
