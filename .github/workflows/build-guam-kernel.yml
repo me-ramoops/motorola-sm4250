@@ -62,7 +62,7 @@ jobs:
             "$RUNNER_TEMP/linux-nura-qcom-sm61x5-v7.2.3-r0.tar.gz" \
             "$RUNNER_TEMP/pmbootstrap-work/cache_distfiles/linux-nura-qcom-sm61x5-v7.2.3-r0.tar.gz"
           pmb build --arch aarch64 linux-nura-qcom-sm61x5 || {
-            tail -n 300 "$RUNNER_TEMP/pmbootstrap-work/log.txt"
+            tail -n 5000 "$RUNNER_TEMP/pmbootstrap-work/log.txt"
             exit 1
           }
 
