@@ -230,8 +230,8 @@ new file mode 100644
 +		spi-cpha;
 +		interrupt-parent = <&tlmm>;
 +		interrupts = <67 IRQ_TYPE_EDGE_FALLING>;
-+		himax,irq-gpio = <&tlmm 67 GPIO_ACTIVE_LOW>;
-+		himax,rst-gpio = <&tlmm 66 GPIO_ACTIVE_HIGH>;
++		irq-gpios = <&tlmm 67 GPIO_ACTIVE_LOW>;
++		reset-gpios = <&tlmm 66 GPIO_ACTIVE_HIGH>;
 +		himax,panel-coords = <0 720 0 1600>;
 +		himax,display-coords = <0 720 0 1600>;
 +		himax,def-build-id = <0x1203>;

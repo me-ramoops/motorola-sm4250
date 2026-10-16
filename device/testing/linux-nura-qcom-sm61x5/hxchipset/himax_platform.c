@@ -15,6 +15,7 @@
 
 #include "himax_platform.h"
 #include "himax_common.h"
+#include <linux/hrtimer.h>
 
 int i2c_error_count;
 struct spi_device *spi;
@@ -56,7 +57,7 @@ int himax_input_register_device(struct input_dev *input_dev)
 	return input_register_device(input_dev);
 }
 
-void himax_vk_parser(struct device_node *dt,
+static void himax_vk_parser(struct device_node *dt,
 		struct himax_i2c_platform_data *pdata)
 {
 	u32 data = 0;
@@ -167,28 +168,19 @@ int himax_parse_dt(struct himax_ts_data *ts,
 	I(" DT-%s:display-coords = (%d, %d)\n", __func__,
 			pdata->screenWidth,
 			pdata->screenHeight);
-	pdata->gpio_irq = devm_gpiod_get_from_of_node(ts->dev, dt,
-			"himax,irq-gpio", 0, GPIOD_IN, "himax-irq");
+	pdata->gpio_irq = devm_gpiod_get(ts->dev, "irq", GPIOD_IN);
 	if (IS_ERR(pdata->gpio_irq))
 		return dev_err_probe(ts->dev, PTR_ERR(pdata->gpio_irq),
 				     "failed to get irq gpio\n");
-	if (!pdata->gpio_irq)
-		return -EINVAL;
 
-	pdata->gpio_reset = devm_gpiod_get_from_of_node(ts->dev, dt,
-			"himax,rst-gpio", 0, GPIOD_OUT_LOW, "himax-reset");
+	pdata->gpio_reset = devm_gpiod_get(ts->dev, "reset", GPIOD_OUT_LOW);
 	if (IS_ERR(pdata->gpio_reset))
 		return dev_err_probe(ts->dev, PTR_ERR(pdata->gpio_reset),
 				     "failed to get reset gpio\n");
-	if (!pdata->gpio_reset)
-		return -EINVAL;
 
-	pdata->gpio_3v3_en = devm_gpiod_get_from_of_node(ts->dev, dt,
-			"himax,3v3-gpio", 0, GPIOD_OUT_LOW, "himax-3v3-en");
-	if (IS_ERR(pdata->gpio_3v3_en) &&
-	    PTR_ERR(pdata->gpio_3v3_en) == -ENOENT)
-		pdata->gpio_3v3_en = NULL;
-	else if (IS_ERR(pdata->gpio_3v3_en))
+	pdata->gpio_3v3_en = devm_gpiod_get_optional(ts->dev, "3v3-en",
+						      GPIOD_OUT_LOW);
+	if (IS_ERR(pdata->gpio_3v3_en))
 		return dev_err_probe(ts->dev, PTR_ERR(pdata->gpio_3v3_en),
 				     "failed to get 3v3 enable gpio\n");
 
@@ -386,7 +378,7 @@ static void himax_ts_isr_func(struct himax_ts_data *ts)
 	himax_ts_work(ts);
 }
 
-irqreturn_t himax_ts_thread(int irq, void *ptr)
+static irqreturn_t himax_ts_thread(int irq, void *ptr)
 {
 	himax_ts_isr_func((struct himax_ts_data *)ptr);
 
@@ -401,7 +393,7 @@ static void himax_ts_work_func(struct work_struct *work)
 	himax_ts_work(ts);
 }
 
-int himax_int_register_trigger(void)
+static int himax_int_register_trigger(void)
 {
 	int ret = 0;
 	struct himax_ts_data *ts = private_ts;
@@ -420,7 +412,7 @@ int himax_int_register_trigger(void)
 	return ret;
 }
 
-int himax_int_en_set(void)
+static int himax_int_en_set(void)
 {
 	int ret = NO_ERR;
 
@@ -680,7 +672,7 @@ int drm_notifier_callback(struct notifier_block *self,
 }
 #endif
 
-int himax_chip_common_probe(struct spi_device *spi)
+static int himax_chip_common_probe(struct spi_device *spi)
 {
 	struct himax_ts_data *ts;
 	int ret = 0;
@@ -743,7 +735,7 @@ err_alloc_gbuffer_failed:
 	return ret;
 }
 
-void himax_chip_common_remove(struct spi_device *spi)
+static void himax_chip_common_remove(struct spi_device *spi)
 {
 	struct himax_ts_data *ts = spi_get_drvdata(spi);
 
@@ -762,7 +754,9 @@ void himax_chip_common_remove(struct spi_device *spi)
 static const struct dev_pm_ops himax_common_pm_ops = {
 #if (!defined(HX_CONFIG_FB)) && (!defined(HX_CONFIG_DRM))
 	.suspend = himax_common_suspend,
+#if !defined(HX_CONTAINER_SPEED_UP)
 	.resume  = himax_common_resume,
+#endif
 #endif
 };
 

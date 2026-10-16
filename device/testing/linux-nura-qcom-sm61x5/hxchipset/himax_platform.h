@@ -92,6 +92,7 @@ extern int himax_bus_write(uint8_t command, uint8_t *data,
 		uint32_t length, uint8_t toRetry);
 extern int himax_bus_write_command(uint8_t command, uint8_t toRetry);
 extern void himax_int_enable(int enable);
+extern void himax_rst_gpio_set(struct gpio_desc *gpio, uint8_t value);
 extern int himax_ts_register_interrupt(void);
 int himax_ts_unregister_interrupt(void);
 extern uint8_t himax_int_gpio_read(struct gpio_desc *gpio);
