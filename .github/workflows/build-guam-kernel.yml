@@ -31,10 +31,23 @@ jobs:
       - name: install pmbootstrap
         run: git clone --depth=1 https://gitlab.postmarketos.org/postmarketOS/pmbootstrap.git "$RUNNER_TEMP/pmbootstrap"
 
+      - name: prepare pmbootstrap
+        run: |
+          mkdir -p "$RUNNER_TEMP/pmbootstrap-work"
+          printf '8\n' > "$RUNNER_TEMP/pmbootstrap-work/version"
+          cat > "$RUNNER_TEMP/pmbootstrap.cfg" <<EOF
+          [pmbootstrap]
+          work = $RUNNER_TEMP/pmbootstrap-work
+          aports = $GITHUB_WORKSPACE
+          device = motorola-guam
+          kernel = nura-qcom-sm61x5
+          EOF
+
       - name: build kernel package
         run: |
           pmb() {
             python3 "$RUNNER_TEMP/pmbootstrap/pmbootstrap.py" \
+              --config "$RUNNER_TEMP/pmbootstrap.cfg" \
               --work "$RUNNER_TEMP/pmbootstrap-work" \
               --aports "$GITHUB_WORKSPACE" \
               "$@"
