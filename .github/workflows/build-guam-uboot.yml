@@ -81,13 +81,17 @@ jobs:
           make -C "$RUNNER_TEMP/u-boot" CROSS_COMPILE=aarch64-linux-gnu- O=.output olddefconfig
           make -C "$RUNNER_TEMP/u-boot" CROSS_COMPILE=aarch64-linux-gnu- O=.output -j2
           gzip -n -c "$RUNNER_TEMP/u-boot/.output/u-boot-nodtb.bin" > u-boot-nodtb.bin.gz
-          cat u-boot-nodtb.bin.gz "$dtb" > u-boot-nodtb.bin.gz-dtb
           python3 "$RUNNER_TEMP/mkbootimg/mkbootimg.py" \
             --pagesize 4096 \
-            --header_version 0 \
-            --base 0x80000000 \
+            --header_version 2 \
+            --base 0x00000000 \
             --kernel_offset 0x00008000 \
-            --kernel u-boot-nodtb.bin.gz-dtb \
+            --ramdisk_offset 0x01000000 \
+            --second_offset 0x00f00000 \
+            --tags_offset 0x00000100 \
+            --dtb_offset 0x01f00000 \
+            --kernel u-boot-nodtb.bin.gz \
+            --dtb "$dtb" \
             --output u-boot-motorola-guam.img
           cp "$dtb" sm4250-motorola-guam.dtb
 
