@@ -62,9 +62,31 @@ jobs:
             "$RUNNER_TEMP/linux-nura-qcom-sm61x5-v7.2.3-r0.tar.gz" \
             "$RUNNER_TEMP/pmbootstrap-work/cache_distfiles/linux-nura-qcom-sm61x5-v7.2.3-r0.tar.gz"
           pmb build --arch aarch64 linux-nura-qcom-sm61x5 || {
-            tail -n 5000 "$RUNNER_TEMP/pmbootstrap-work/log.txt"
+            python3 - "$RUNNER_TEMP/pmbootstrap-work/log.txt" <<'PY'
+          import re
+          import sys
+          from pathlib import Path
+
+          lines = Path(sys.argv[1]).read_text(errors="replace").splitlines()
+          pattern = re.compile(r"fatal error:|error:|undefined reference|no space left|out of memory|killed|segmentation fault|make(?:\[\d+\])?: \*\*\*", re.IGNORECASE)
+          matches = [(index, line) for index, line in enumerate(lines) if pattern.search(line)]
+          if matches:
+              for index, line in matches[-200:]:
+                  print(f"{index + 1}: {line}")
+          else:
+              print("\n".join(lines[-2000:]))
+          PY
             exit 1
           }
+
+      - name: upload failed kernel build log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-nura-qcom-sm61x5-build-log-${{ github.sha }}
+          path: ${{ runner.temp }}/pmbootstrap-work/log.txt
+          if-no-files-found: warn
+          retention-days: 7
 
       - uses: actions/upload-artifact@v4
         with:
