@@ -3,7 +3,7 @@ maintainer="Barnabas Czeman <barnabas.czeman@postmarketos.org>"
 _flavor="nura-qcom-sm61x5"
 pkgname=linux-$_flavor
 pkgver=7.2.3
-pkgrel=7
+pkgrel=8
 pkgdesc="Close to mainline linux kernel for Qualcomm Snapdragon SM61x5"
 arch="aarch64"
 _carch="arm64"
@@ -73,5 +73,5 @@ package() {
 sha512sums="
 2a6393212c413cf3812c2293d074fc9b7f82dec01c740251fe390b0633484b247e95e886493cbec77e6ef9741aebe0a4134c2218672424b332ae119c22566f23  linux-nura-qcom-sm61x5-v7.2.3-r0.tar.gz
 d8605600e5e93ff0974b699c4ce6b25776f1566c52bde0f4ee0710eac32a6d2d0697ab608df702c6904c1a3e720fc2abb08a69fa6e53bf4ecea314e9fb7a877a  config-nura-qcom-sm61x5.aarch64
-90fa3ca053ed2dce411ad979b1a2df8dd3b5f05be9ef729afe71a6ae07de157a409c1407f08b6fd7ab45ce5a8e4bd71f0148ffa637fe76c88374b4872d431c37  motorola-guam.patch
+064c89f62e8b12d515d7d77d3ad8564af9e3214923acb752d81d3e5574aadb2f8afa7d194d1d0310e86146677986c9364a92de7669a6e01e7ce98a163f168a62  motorola-guam.patch
 "

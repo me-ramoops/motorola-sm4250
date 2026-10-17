@@ -36,14 +36,13 @@ new file mode 100644
 +	model = "Motorola Moto E7 Plus (XT2081-2)";
 +	compatible = "motorola,guam", "qcom,sm4250";
 +	chassis-type = "handset";
++	qcom,msm-id = <0x1a1 0x10000 0x1bc 0x10000>;
++	qcom,board-id = <0 0xb200>;
 +
 +	aliases {
 +		mmc0 = &sdhc_1;
 +		mmc1 = &sdhc_2;
 +	};
-+
-+	qcom,msm-id = <0x1a1 0x10000 0x1bc 0x10000>;
-+	qcom,board-id = <0 0xb200>;
 +
 +	panel_avdd: regulator-panel-avdd {
 +		compatible = "regulator-fixed";
