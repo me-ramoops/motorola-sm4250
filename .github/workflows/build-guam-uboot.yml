@@ -2,15 +2,9 @@ name: build guam u-boot
 
 on:
   workflow_dispatch:
-    inputs:
-      kernel_run_id:
-        description: kernel build run id
-        required: true
-        type: string
-      kernel_sha:
-        description: kernel build commit
-        required: true
-        type: string
+  push:
+    paths:
+      - .github/workflows/build-guam-uboot.yml
   workflow_run:
     workflows:
       - build guam kernel
@@ -20,25 +14,15 @@ on:
       - main
 
 permissions:
-  actions: read
   contents: read
 
 jobs:
   uboot:
-    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-24.04
     timeout-minutes: 90
-    env:
-      KERNEL_RUN_ID: ${{ github.event.workflow_run.id || inputs.kernel_run_id }}
-      KERNEL_SHA: ${{ github.event.workflow_run.head_sha || inputs.kernel_sha }}
     steps:
       - uses: actions/checkout@v4
-
-      - uses: actions/download-artifact@v4
-        with:
-          name: linux-nura-qcom-sm61x5-${{ env.KERNEL_SHA }}
-          run-id: ${{ env.KERNEL_RUN_ID }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: install dependencies
         run: |
@@ -47,10 +31,6 @@ jobs:
 
       - name: build u-boot image
         run: |
-          mkdir kernel-package
-          tar -xzf linux-nura-qcom-sm61x5-*.apk -C kernel-package
-          dtb=$(find kernel-package -name sm4250-motorola-guam.dtb -print -quit)
-          test -n "$dtb"
           clone_retry() {
             repository=$1
             reference=$2
@@ -80,8 +60,9 @@ jobs:
           "$RUNNER_TEMP/u-boot/scripts/kconfig/merge_config.sh" -m -O "$RUNNER_TEMP/u-boot/.output" "$RUNNER_TEMP/u-boot/.output/.config" "$RUNNER_TEMP/u-boot/board/qualcomm/qcom-phone.config" "$RUNNER_TEMP/u-boot/board/qualcomm/guam.config"
           make -C "$RUNNER_TEMP/u-boot" CROSS_COMPILE=aarch64-linux-gnu- O=.output olddefconfig
           make -C "$RUNNER_TEMP/u-boot" CROSS_COMPILE=aarch64-linux-gnu- O=.output -j2
+          dtb=$(find "$RUNNER_TEMP/u-boot/.output" -name sm4250-motorola-guam.dtb -print -quit)
+          test -n "$dtb"
           gzip -n -c "$RUNNER_TEMP/u-boot/.output/u-boot-nodtb.bin" > u-boot-nodtb.bin.gz
-          cat u-boot-nodtb.bin.gz "$dtb" > u-boot-nodtb.bin.gz-dtb
           mkdir "$RUNNER_TEMP/guam-initramfs"
           cd "$RUNNER_TEMP/guam-initramfs"
           find . -print0 | cpio --null -o -H newc --quiet > "$RUNNER_TEMP/guam-initramfs.cpio"
@@ -97,7 +78,7 @@ jobs:
             --tags_offset 0x00000100 \
             --dtb_offset 0x01f00000 \
             --cmdline 'console=ttyMSM0,115200n8 earlycon=msm_geni_serial,0x4a90000 androidboot.hardware=qcom androidboot.console=ttyMSM0 androidboot.memcg=1 lpm_levels.sleep_disabled=1 video=vfb:640x400,bpp=32,memsize=3072000 msm_rtb.filter=0x237 service_locator.enable=1 swiotlb=2048 loop.max_part=7 androidboot.hab.csv=4 androidboot.hab.product=guam androidboot.hab.cid=50 buildvariant=user' \
-            --kernel u-boot-nodtb.bin.gz-dtb \
+            --kernel u-boot-nodtb.bin.gz \
             --ramdisk u-boot-ramdisk.cpio.gz \
             --dtb "$dtb" \
             --output u-boot-motorola-guam.img
@@ -105,7 +86,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: u-boot-motorola-guam-${{ env.KERNEL_SHA }}
+          name: u-boot-motorola-guam-${{ github.sha }}
           path: |
             u-boot-motorola-guam.img
             u-boot-nodtb.bin.gz
