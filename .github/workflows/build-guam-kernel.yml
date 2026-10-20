@@ -6,6 +6,7 @@ on:
     paths:
       - device/testing/linux-nura-qcom-sm61x5/**
       - device/testing/device-motorola-guam/**
+      - device/testing/firmware-motorola-guam/**
       - .github/workflows/build-guam-kernel.yml
 
 permissions:
@@ -14,7 +15,7 @@ permissions:
 jobs:
   kernel:
     runs-on: ubuntu-24.04
-    timeout-minutes: 240
+    timeout-minutes: 360
     steps:
       - uses: actions/checkout@v4
 
@@ -26,7 +27,7 @@ jobs:
       - name: install host dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y kpartx
+          sudo apt-get install -y kpartx zstd
 
       - name: install pmbootstrap
         run: git clone --depth=1 https://gitlab.postmarketos.org/postmarketOS/pmbootstrap.git "$RUNNER_TEMP/pmbootstrap"
@@ -41,6 +42,7 @@ jobs:
           aports = $GITHUB_WORKSPACE
           device = motorola-guam
           kernel = nura-qcom-sm61x5
+          ui = gnome-mobile
           EOF
 
       - name: build kernel package
@@ -92,5 +94,35 @@ jobs:
         with:
           name: linux-nura-qcom-sm61x5-${{ github.sha }}
           path: ${{ runner.temp }}/pmbootstrap-work/packages/edge/aarch64/linux-nura-qcom-sm61x5-*.apk
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: build guam image
+        env:
+          PMOS_TEST_PASSWORD: ${{ secrets.PMOS_TEST_PASSWORD }}
+        run: |
+          if [ -z "$PMOS_TEST_PASSWORD" ]; then
+            echo "PMOS_TEST_PASSWORD secret is required" >&2
+            exit 1
+          fi
+          pmb() {
+            python3 "$RUNNER_TEMP/pmbootstrap/pmbootstrap.py" \
+              --config "$RUNNER_TEMP/pmbootstrap.cfg" \
+              --work "$RUNNER_TEMP/pmbootstrap-work" \
+              --aports "$GITHUB_WORKSPACE" \
+              "$@"
+          }
+
+          pmb build --arch aarch64 firmware-motorola-guam device-motorola-guam
+          pmb install --password "$PMOS_TEST_PASSWORD" --filesystem ext4
+          pmb export "$RUNNER_TEMP/guam-export"
+          mkdir guam-image
+          cp -L "$RUNNER_TEMP/guam-export/boot.img" guam-image/boot.img
+          zstd -3 -T2 "$RUNNER_TEMP/guam-export/motorola-guam.img" -o guam-image/motorola-guam.img.zst
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pmos-motorola-guam-${{ github.sha }}
+          path: guam-image/*
           if-no-files-found: error
           retention-days: 14

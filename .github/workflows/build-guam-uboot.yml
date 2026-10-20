@@ -5,20 +5,14 @@ on:
   push:
     paths:
       - .github/workflows/build-guam-uboot.yml
-  workflow_run:
-    workflows:
-      - build guam kernel
-    types:
-      - completed
-    branches:
-      - main
+      - device/testing/device-motorola-guam/**
+      - device/testing/linux-nura-qcom-sm61x5/motorola-guam.patch
 
 permissions:
   contents: read
 
 jobs:
   uboot:
-    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-24.04
     timeout-minutes: 90
     steps:
