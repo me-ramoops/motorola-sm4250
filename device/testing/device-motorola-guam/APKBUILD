@@ -3,7 +3,7 @@ maintainer="fwlta <monkeyfwlta@protonmail.com>"
 pkgname=device-motorola-guam
 pkgdesc="Motorola Moto E7 Plus"
 pkgver=1
-pkgrel=1
+pkgrel=2
 url="https://gitlab.com/vanadium-oss/motorola-sm4250"
 license="MIT"
 arch="aarch64"
@@ -31,6 +31,6 @@ package() {
 }
 
 sha512sums="
-f11430af7af028a42ad54858e24d00b3167b8421057ad3fe06352c9cdfd3a16d105a48c1ebdd9ec43db25e978d3d2e71ad361dbc8031881503b2fe5d97793d9f  deviceinfo
+3b8c8903cc8e312b8ddefade45ad3b317d321b62feec1ae4242b7b2c6132e1763ed62df0f463cad9701107bf99943dd9a5a6747ac38ca6bf60fa2eff31376dfe  deviceinfo
 04cc87ed6b0041ede7edb2693ee4dd58d6ac8f1b036a0b37e1a86cce57b66e35d9f400a3ea75d75278b028132535033915f3a2fff919866e85336c5f92a68ffe  kernel-cmdline.conf
 "
