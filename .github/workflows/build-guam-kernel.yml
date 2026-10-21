@@ -118,7 +118,7 @@ jobs:
           pmb export "$RUNNER_TEMP/guam-export"
           mkdir guam-image
           cp -L "$RUNNER_TEMP/guam-export/boot.img" guam-image/boot.img
-          zstd -3 -T2 "$RUNNER_TEMP/guam-export/motorola-guam.img" -o guam-image/motorola-guam.img.zst
+          zstd -3 -T2 -c < "$RUNNER_TEMP/guam-export/motorola-guam.img" > guam-image/motorola-guam.img.zst
 
       - uses: actions/upload-artifact@v4
         with:
