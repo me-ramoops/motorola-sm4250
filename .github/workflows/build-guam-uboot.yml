@@ -56,7 +56,7 @@ jobs:
           make -C "$RUNNER_TEMP/u-boot" CROSS_COMPILE=aarch64-linux-gnu- O=.output -j2
           dtb=$(find "$RUNNER_TEMP/u-boot/.output" -name sm4250-motorola-guam.dtb -print -quit)
           test -n "$dtb"
-          gzip -n -c "$RUNNER_TEMP/u-boot/.output/u-boot-nodtb.bin" > u-boot-nodtb.bin.gz
+          cp "$RUNNER_TEMP/u-boot/.output/u-boot-nodtb.bin" u-boot-nodtb.bin
           mkdir "$RUNNER_TEMP/guam-initramfs"
           cd "$RUNNER_TEMP/guam-initramfs"
           find . -print0 | cpio --null -o -H newc --quiet > "$RUNNER_TEMP/guam-initramfs.cpio"
@@ -72,7 +72,7 @@ jobs:
             --tags_offset 0x00000100 \
             --dtb_offset 0x01f00000 \
             --cmdline 'console=ttyMSM0,115200n8 earlycon=msm_geni_serial,0x4a90000 androidboot.hardware=qcom androidboot.console=ttyMSM0 androidboot.memcg=1 lpm_levels.sleep_disabled=1 video=vfb:640x400,bpp=32,memsize=3072000 msm_rtb.filter=0x237 service_locator.enable=1 swiotlb=2048 loop.max_part=7 androidboot.hab.csv=4 androidboot.hab.product=guam androidboot.hab.cid=50 buildvariant=user' \
-            --kernel u-boot-nodtb.bin.gz \
+            --kernel u-boot-nodtb.bin \
             --ramdisk u-boot-ramdisk.cpio.gz \
             --dtb "$dtb" \
             --output u-boot-motorola-guam.img
@@ -83,7 +83,7 @@ jobs:
           name: u-boot-motorola-guam-${{ github.sha }}
           path: |
             u-boot-motorola-guam.img
-            u-boot-nodtb.bin.gz
+            u-boot-nodtb.bin
             sm4250-motorola-guam.dtb
           if-no-files-found: error
           retention-days: 14
