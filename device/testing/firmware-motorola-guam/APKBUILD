@@ -1,18 +1,28 @@
 maintainer="fwlta <monkeyfwlta@protonmail.com>"
 pkgname=firmware-motorola-guam
 pkgver=1
-pkgrel=1
+pkgrel=2
 pkgdesc="firmware for motorola moto e7 plus"
 url="https://github.com/TheMuppets/proprietary_vendor_motorola_guam"
 arch="aarch64"
 license="proprietary"
 options="!check !strip !archcheck !tracedeps"
+_linux_firmware_commit="98b55c84e8da5c09dd9b8d21f5667c63db5993fa"
 source="
+	wcn3990-board-2.bin::https://gitlab.com/api/v4/projects/kernel-firmware%2Flinux-firmware/repository/files/ath10k%2FWCN3990%2Fhw1.0%2Fboard-2.bin/raw?ref=$_linux_firmware_commit
+	wcn3990-firmware-5.bin::https://gitlab.com/api/v4/projects/kernel-firmware%2Flinux-firmware/repository/files/ath10k%2FWCN3990%2Fhw1.0%2Ffirmware-5.bin/raw?ref=$_linux_firmware_commit
+	wcn3990-wlanmdsp.mbn::https://gitlab.com/api/v4/projects/kernel-firmware%2Flinux-firmware/repository/files/ath10k%2FWCN3990%2Fhw1.0%2Fwlanmdsp.mbn/raw?ref=$_linux_firmware_commit
 	himax_firmware.bin::https://raw.githubusercontent.com/TheMuppets/proprietary_vendor_motorola_guam/371e8e36f49213c3c705476087d19eb74abe6f5d/proprietary/vendor/firmware/hlt_Himax_firmware.bin
 	30-motorola-guam-touchscreen.files
 "
 
 package() {
+	install -Dm644 "$srcdir/wcn3990-board-2.bin" \
+		"$pkgdir/usr/lib/firmware/ath10k/WCN3990/hw1.0/board-2.bin"
+	install -Dm644 "$srcdir/wcn3990-firmware-5.bin" \
+		"$pkgdir/usr/lib/firmware/ath10k/WCN3990/hw1.0/firmware-5.bin"
+	install -Dm644 "$srcdir/wcn3990-wlanmdsp.mbn" \
+		"$pkgdir/usr/lib/firmware/ath10k/WCN3990/hw1.0/wlanmdsp.mbn"
 	install -Dm644 "$srcdir/himax_firmware.bin" \
 		"$pkgdir/usr/lib/firmware/Himax_firmware.bin"
 	install -Dm644 "$srcdir/30-motorola-guam-touchscreen.files" \
@@ -20,6 +30,9 @@ package() {
 }
 
 sha512sums="
+dae2fcc8844cc01d93fc9c28f70d5fe3a49fd8e21e5fa10b65e29dfc05f1d9e684155b32d48e14fdd8bd71e90d83c8eb0ef7acf28f0b386a259bb8c646f5a490  wcn3990-board-2.bin
+7dce040ac3e1452be43dea64ba2cf7b2b3703371d233c28e9ed768b55fa012dd78104208fcb5e4eccf17cece289d9a09bc0f92227766b40eb99fc5921caa547c  wcn3990-firmware-5.bin
+15538bfe95a00979c7cf23fe9f014afd31f9b82224e3057cebe46fb50863ce3cb7b4bc7359acd55cd40385352452e78c4a761cb2ba15f9ee6078778a6c7a0b64  wcn3990-wlanmdsp.mbn
 725cf884484f9a5c9b3461b71d7012c5ba9ff2b1cc9f4f201b84313b15bd1edc42b7e67f452ba92c1dde6682d5deaa3d55a9acaa73911ee94e4c33f6383379a4  himax_firmware.bin
 b2ef3a3824eb192345d332daf5a0e0049255d798757643a6ab90efede4004500ea5e43c921d629f7fe192c3b657cb749d71ab4da160bccbfa48926298374af34  30-motorola-guam-touchscreen.files
 "
