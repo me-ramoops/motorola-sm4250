@@ -1,12 +1,12 @@
 diff --git a/drivers/input/touchscreen/Kconfig b/drivers/input/touchscreen/Kconfig
 --- a/drivers/input/touchscreen/Kconfig
 +++ b/drivers/input/touchscreen/Kconfig
-@@ -0,0 +1 @@
+@@ -2,0 +2 @@
 +source "drivers/input/touchscreen/hxchipset/Kconfig"
 diff --git a/drivers/input/touchscreen/Makefile b/drivers/input/touchscreen/Makefile
 --- a/drivers/input/touchscreen/Makefile
 +++ b/drivers/input/touchscreen/Makefile
-@@ -0,0 +1 @@
+@@ -2,0 +2 @@
 +obj-$(CONFIG_TOUCHSCREEN_HIMAX_CHIPSET) += hxchipset/
 diff --git a/arch/arm64/boot/dts/qcom/Makefile b/arch/arm64/boot/dts/qcom/Makefile
 --- a/arch/arm64/boot/dts/qcom/Makefile
