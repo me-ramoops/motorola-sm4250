@@ -25,5 +25,5 @@ deviceinfo_flash_offset_ramdisk="0x01000000"
 deviceinfo_flash_offset_second="0x00000000"
 deviceinfo_flash_offset_tags="0x00000100"
 
-deviceinfo_usb_network_function="ncm.usb0"
+deviceinfo_usb_network_function="rndis.usb0"
 deviceinfo_usb_network_host_addr="02:42:42:00:00:01"
