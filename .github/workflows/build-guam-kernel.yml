@@ -116,7 +116,8 @@ jobs:
           pmb build --arch aarch64 firmware-motorola-guam device-motorola-guam
           pmb install --password "$PMOS_TEST_PASSWORD" --filesystem ext4 --sparse
           pmb export "$RUNNER_TEMP/guam-export"
-          file "$RUNNER_TEMP/guam-export/motorola-guam.img" | grep -qi "android sparse image"
+          magic=$(od -An -tx1 -N4 "$RUNNER_TEMP/guam-export/motorola-guam.img" | tr -d ' \n')
+          test "$magic" = "3aff26ed"
           mkdir guam-image
           cp -L "$RUNNER_TEMP/guam-export/boot.img" guam-image/boot.img
           zstd -3 -T2 -c < "$RUNNER_TEMP/guam-export/motorola-guam.img" > guam-image/motorola-guam.img.zst
